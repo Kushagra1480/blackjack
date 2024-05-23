@@ -1,4 +1,4 @@
-class Card {
+export class Card {
     constructor(suit, key, num) {
         this.suit = suit
         this.key = key
@@ -10,7 +10,7 @@ class Card {
     }
 }
 
-class Deck {
+export class Deck {
     constructor () {
         this.deck = []
         this.shuffle()
@@ -48,5 +48,15 @@ class Deck {
         this.shuffle();
         console.log("Deck reset. Cards have been shuffled.")
         return this;
+    }
+}
+
+export class Player {
+    constructor() {
+        this.hand = []
+    }
+    draw(deck) {
+        this.hand.push(deck.deal().show())
+        return this
     }
 }
