@@ -35,32 +35,36 @@ function App() {
     setDealerHand([])
     setPlayerHand([])
   }
+  const hit = () => {
+    const randomIndex = Math.floor(Math.random() * deck.length)
+    const dealtCard = deck.splice(randomIndex, 1)[0]
+    setPlayerHand([...playerHand, dealtCard])
+  }
   return (
     <div className="App">
       {dealerHand.length == 0 && (
         <button className="start-button" onClick={dealCards}>DEAL CARDS</button>
       )}
       {dealerHand.length > 0 && (
-        <div>
+        <div className='game'>
         <h2>Dealer's Hand:</h2>
         <ul>
           <li key={0}>{dealerHand[0].value} of {dealerHand[0].suit}</li>
           <li>Face Down Card</li>
         </ul>
-      </div>
-      )}
-      {playerHand.length > 0 && (
-        <div>
-          <h2>Your Hand:</h2>
-          <ul>
-            {playerHand.map((card, index) => (
-                <li key={index}>{card.value} of {card.suit}</li>
-            ))}
-          </ul>
+        <h2>Your Hand:</h2>
+        <ul>
+          {playerHand.map((card, index) => (
+              <li key={index}>{card.value} of {card.suit}</li>
+          ))}
+        </ul>
+        <div className='game-buttons'>
+          <button onClick={hit}>Hit</button>
+          <button>Stand</button>
         </div>
-      )}
-      {dealerHand.length > 0 && (
+        <br />
         <button className='start-button' onClick={resetGame}>RETVRN</button>
+      </div>
       )}
     </div>
   );
