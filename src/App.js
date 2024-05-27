@@ -15,6 +15,7 @@ function App() {
     setDeck(newDeck)
   }
 
+
   const dealCards = () => {
     if (deck.length < 2) {
       alert("Empty Deck!! Initialize a Deck first!!")
@@ -30,16 +31,21 @@ function App() {
   React.useEffect(() => {
     createDeck();
   }, [])
+  const resetGame = () => {
+    setDealerHand([])
+    setPlayerHand([])
+  }
   return (
     <div className="App">
-      <button className="start-button" onClick={dealCards}>DEAL CARDS</button>
+      {dealerHand.length == 0 && (
+        <button className="start-button" onClick={dealCards}>DEAL CARDS</button>
+      )}
       {dealerHand.length > 0 && (
         <div>
         <h2>Dealer's Hand:</h2>
         <ul>
-          {dealerHand.map((card, index) => (
-              <li key={index}>{card.value} of {card.suit}</li>
-          ))}
+          <li key={0}>{dealerHand[0].value} of {dealerHand[0].suit}</li>
+          <li>Face Down Card</li>
         </ul>
       </div>
       )}
@@ -52,6 +58,9 @@ function App() {
             ))}
           </ul>
         </div>
+      )}
+      {dealerHand.length > 0 && (
+        <button className='start-button' onClick={resetGame}>RETVRN</button>
       )}
     </div>
   );
