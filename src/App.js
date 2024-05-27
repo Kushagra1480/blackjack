@@ -1,13 +1,11 @@
-import logo from './logo.svg';
-import './App.css';
-import Card from './Game'
-import Deck from './Game'
-import Player from './Game'
-import React, { useState } from 'react';
+import './App.css'
+import React, { useState } from 'react'
+
 
 function App() {
   const [deck, setDeck] = useState([])
   const [playerHand, setPlayerHand] = useState([])
+  const [dealerHand, setDealerHand] = useState([])
 
   const createDeck = () => {
     const suits = ['Hearts', 'Diamonds', 'Spades', 'Clubs']
@@ -24,16 +22,27 @@ function App() {
     }
     const shuffleDeck = [...deck].sort(() => Math.random() - 0.5)
     const dealtCards = shuffleDeck.slice(0, 2)
+    const dealerCards = shuffleDeck.slice(2, 4)
     setDeck(shuffleDeck.slice(2))
     setPlayerHand(dealtCards)
+    setDealerHand(dealerCards)
   }
   React.useEffect(() => {
     createDeck();
   }, [])
   return (
     <div className="App">
-      <button onClick={dealCards}>Deal Cards</button>
-      {console.log(deck)}
+      <button className="start-button" onClick={dealCards}>DEAL CARDS</button>
+      {dealerHand.length > 0 && (
+        <div>
+        <h2>Dealer's Hand:</h2>
+        <ul>
+          {dealerHand.map((card, index) => (
+              <li key={index}>{card.value} of {card.suit}</li>
+          ))}
+        </ul>
+      </div>
+      )}
       {playerHand.length > 0 && (
         <div>
           <h2>Your Hand:</h2>
