@@ -15,12 +15,36 @@
   font-family: 'Poppins';
   background-color: #75B9BE;
   border-radius: 3%;
+  font-weight: bold;
 }
-.start-button:hover{
+.start-button, .game-button:hover{
   cursor: pointer;
   background-color: #9fd2d6;
 }
 
 .game {
   margin-top: 200px;
+}
+
+.game-buttons {
+  display: flex;
+}
+
+.game-button {
+  width: 215px;
+  height: 75px;
+  border: none;
+  font-size: 25px;
+  font-family: 'Poppins';
+  background-color: #75B9BE;
+  border-radius: 3%;
+  font-weight: bold;
+}
+
+.stand {
+  margin-left: 20px;
+}
+
+.hands {
+  margin-left: 150px;
 }

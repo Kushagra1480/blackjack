@@ -10,7 +10,7 @@ function App() {
   const [dealerScore, setDealerScore] = useState(0)
   const [playerWin, setPlayerWin] = useState(false)
   const [dealerWin, setDealerWin] = useState(false)
-
+  const [stand, setStand] = useState(false)
 
   const createDeck = () => {
     const suits = ['Hearts', 'Diamonds', 'Spades', 'Clubs']
@@ -31,8 +31,9 @@ function App() {
     setPlayerHand(dealtCards)
     setDealerHand(dealerCards)
     setPlayerScore(calculateScore(dealtCards))
+    setDealerScore(calculateScore(dealerCards))
   }
-  const calculateScore = (hand) => {
+  const calculateScore = (hand, owner) => {
     let score = 0
     let hasAce = false
     for (const card of hand) {
@@ -55,10 +56,22 @@ function App() {
       hasAce = false
     }
     if (score === 21) {
-      setPlayerWin(true)
+      switch(owner) {
+        case "player":
+          setPlayerWin(true)
+          break
+        case "dealer":
+          setDealerWin(true)
+      }
     }
     if (score > 21) {
-      setDealerWin(true)
+      switch(owner) {
+        case "player":
+          setDealerWin(true)
+          break
+        case "dealer":
+          setPlayerWin(true)
+      }
     }
     return score 
   }
@@ -72,35 +85,82 @@ function App() {
   const hit = () => {
     const randomIndex = Math.floor(Math.random() * deck.length)
     const dealtCard = deck.splice(randomIndex, 1)[0]
-    setPlayerHand([...playerHand, dealtCard])
-    setPlayerScore(calculateScore([...playerHand, dealtCard]))
+    const newHand = [...playerHand, dealtCard]
+    setPlayerHand(newHand)
+    setPlayerScore(calculateScore(newHand, "player"))
+  }
+  const standHelper = () => {
+    setStand(true);
+    let updatedDealerHand = [...dealerHand]; // Create a copy of dealerHand
+    let score = dealerScore
+
+    while (score < 21 && deck.length > 0) {
+      const randomIndex = Math.floor(Math.random() * deck.length)
+      const dealtCard = deck.splice(randomIndex, 1)[0]
+      updatedDealerHand = [...updatedDealerHand, dealtCard]
+      score = calculateScore(updatedDealerHand, "dealer")
+      console.log("Score: ", score)
+    }
+    setDealerScore(score)
+    if (score > 21) {
+      setPlayerWin(true);
+    } else if (playerScore > score) {
+      setPlayerWin(true);
+    } else if (playerScore < score) {
+      setDealerWin(true);
+    }
   }
   return (
     <div className="App">
       {dealerHand.length == 0 && (
         <button className="start-button" onClick={dealCards}>START GAME</button>
       )}
-      {dealerHand.length > 0 && (
+      {dealerHand.length && !playerWin && !dealerWin > 0 && (
         <div className='game'>
-        <h2>Dealer's Hand:</h2>
-        <ul>
-          <li key={0}>{dealerHand[0].value} of {dealerHand[0].suit}</li>
-          <li>Face Down Card</li>
-        </ul>
-        <h2>Your Hand:</h2>
-        <ul>
-          {playerHand.map((card, index) => (
-              <li key={index}>{card.value} of {card.suit}</li>
-          ))}
-        </ul>
+          <div className='hands'>
+              <h2>Dealer's Hand:</h2>
+              {!stand && (
+                <ul>
+                  <li key={0}>{dealerHand[0].value} of {dealerHand[0].suit}</li>
+                  <li>Face Down Card</li>
+                </ul>
+              ) }
+              {
+                stand && (
+                  <ul>
+                    {dealerHand.map((card, index) => (
+                        <li key={index}>{card.value} of {card.suit}</li>
+                    ))}
+                  </ul>
+                )
+              }
+            <h2>Your Hand:</h2>
+            <ul>
+              {playerHand.map((card, index) => (
+                  <li key={index}>{card.value} of {card.suit}</li>
+              ))}
+            </ul>
+          </div>
         <h4>Score: {playerScore}</h4>
         <div className='game-buttons'>
-          <button onClick={hit}>Hit</button>
-          <button>Stand</button>
+          <button onClick={hit} className='game-button'>HIT</button>
+          <button onClick={standHelper} className='game-button stand'>STAND</button>
         </div>
-        <br />
-        <button className='start-button' onClick={resetGame}>RETVRN</button>
       </div>
+      )}
+      {playerWin && (
+        <div className='game'>
+          <h1>Player Wins!!</h1>
+          <h4>Player Score: {playerScore}</h4>
+          <h4>Dealer Score: {dealerScore}</h4>
+        </div>
+      )}
+      {dealerWin && (
+        <div className='game'>
+          <h1>Dealer Wins!!</h1>
+          <h4>Player Score: {playerScore}</h4>
+          <h4>Dealer Score: {dealerScore}</h4>
+        </div>
       )}
     </div>
   );
