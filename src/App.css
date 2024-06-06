@@ -64,3 +64,29 @@
   align-items: baseline;
   margin-bottom: -100px;
 }
+
+.back-card {
+  height: 200px;
+  width: 150px;
+  margin-bottom: 200px;
+}
+
+.other-card {
+  width: 500px;
+  height: 600px;
+}
+.dealer-hand {
+  margin-left: 165px;
+  margin-bottom: -100px;
+  margin-top: -200px;
+}
+
+.scores {
+  display: flex;
+  align-items: baseline;
+  margin-top: -200px; 
+}
+
+.player-hand {
+  margin-top: -50px;
+}
