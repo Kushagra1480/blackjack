@@ -36,6 +36,7 @@ const fetchNewDeck = async () => {
     );
 
     setDealerHand(newDealerHand);
+    setDealerScore(calculateScore(newDealerHand));
 
   } catch (error) {
     console.error(error);
@@ -100,44 +101,57 @@ const fetchNewDeck = async () => {
       });
   }
 
-  const dealerTurnHelper = () => {
-    setDealerTurn(true)
-    let currentDealerScore = dealerScore
-    while(currentDealerScore < 21) {
-      axios.get(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`)
-        .then(response => {
-          if (response.data) {
-            const drawnCard = response.data.cards[0]
-            setDealerHand(prevDealerHand => [...prevDealerHand, drawnCard])
-            if(drawnCard.value === 'ACE') {
-              if (currentDealerScore + 11 <= 21) {
-                currentDealerScore = currentDealerScore + 11
-              } else {
-                currentDealerScore = currentDealerScore + 1
-              }
-            } else {
-              currentDealerScore = currentDealerScore + getCardPoints(drawnCard)
-            }
-            if (currentDealerScore > 21) {
-              setPlayerWin(true)
-            } else if(currentDealerScore === 21) {
-              setDealerWin(true)
-            }
-            setDealerScore(currentDealerScore)
-          }
-        })
-        .catch(error => {
-          console.error(error);
-        });
+  const fetchNewCard = async () => {
+    try {
+      const response = await axios.get(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`)
+      if (response.data) {
+        const drawnCard = response.data.cards[0]
+        return drawnCard
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
-
+  
+  const dealerTurnHelper = async () => {
+    setDealerTurn(true)
+    let currentDealerScore = dealerScore
+    console.log(`currentDealerScore: ${currentDealerScore}`)
+    // Base case: stop recursion when dealer's score is 21 or greater
+    if (currentDealerScore >= 21) {
+      return
+    }
+  
+    const drawnCard = await fetchNewCard()
+    if (drawnCard) {
+      setDealerHand(prevDealerHand => [...prevDealerHand, drawnCard])
+      currentDealerScore += getCardPoints(drawnCard)
+      if (drawnCard.value === 'ACE') {
+        if (currentDealerScore + 11 <= 21) {
+          currentDealerScore += 11
+        } else {
+          currentDealerScore += 1
+        }
+      } else {
+        currentDealerScore += getCardPoints(drawnCard)
+      }
+      if (currentDealerScore > 21) {
+        setPlayerWin(true)
+      } else if (currentDealerScore === 21) {
+        setDealerWin(true)
+      }
+      setDealerScore(currentDealerScore)
+      if (currentDealerScore < 21) {
+        await dealerTurnHelper()
+      }
+    }
+  }
   return (
     <div className="App">
       {!game && (
         <button className='start-button' onClick={playHelper}>PLAY</button>
       )}
-      {game && !playerWin && !dealerWin && (
+      {game && (
         <div className='game'>
           <div className='hands'>
           <h2>Dealer's Hand:</h2>
@@ -161,6 +175,9 @@ const fetchNewDeck = async () => {
           </div>
           <div className='scores'>
             <h3>Player Score: {playerScore}</h3>
+            {dealerTurn && (
+              <h3>Dealer Score: {dealerScore}</h3>
+            )}
           </div>
           <div className='game-buttons'> 
             <button className='game-button' onClick={hitHelper}>HIT</button>
