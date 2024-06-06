@@ -100,6 +100,37 @@ const fetchNewDeck = async () => {
       });
   }
 
+  const dealerTurnHelper = () => {
+    setDealerTurn(true)
+    let currentDealerScore = dealerScore
+    while(currentDealerScore < 21) {
+      axios.get(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`)
+        .then(response => {
+          if (response.data) {
+            const drawnCard = response.data.cards[0]
+            setDealerHand(prevDealerHand => [...prevDealerHand, drawnCard])
+            if(drawnCard.value === 'ACE') {
+              if (currentDealerScore + 11 <= 21) {
+                currentDealerScore = currentDealerScore + 11
+              } else {
+                currentDealerScore = currentDealerScore + 1
+              }
+            } else {
+              currentDealerScore = currentDealerScore + getCardPoints(drawnCard)
+            }
+            if (currentDealerScore > 21) {
+              setPlayerWin(true)
+            } else if(currentDealerScore === 21) {
+              setDealerWin(true)
+            }
+            setDealerScore(currentDealerScore)
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+  }
 
   return (
     <div className="App">
@@ -133,7 +164,7 @@ const fetchNewDeck = async () => {
           </div>
           <div className='game-buttons'> 
             <button className='game-button' onClick={hitHelper}>HIT</button>
-            <button className='game-button stand'>STAND</button>
+            <button className='game-button stand'onClick={dealerTurnHelper}>STAND</button>
           </div>
         </div>
       )}
