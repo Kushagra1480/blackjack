@@ -17,17 +17,19 @@
   border-radius: 3%;
   font-weight: bold;
 }
-.start-button, .game-button:hover{
+
+.start-button:hover, .game-button:hover {
   cursor: pointer;
   background-color: #9fd2d6;
 }
 
 .game {
-  margin-top: 200px;
+  margin-top: 50px;
 }
 
 .game-buttons {
   display: flex;
+  margin-left: 60px;
 }
 
 .game-button {
@@ -42,9 +44,49 @@
 }
 
 .stand {
-  margin-left: 20px;
+  margin-left: 40px;
 }
 
 .hands {
   margin-left: 150px;
+}
+
+.hand-card {
+  width: 500px;
+  height: 600px;
+  margin: -100px;
+  margin-top: -200px;
+  margin-left: -200px;
+}
+
+.hand {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: -100px;
+}
+
+.back-card {
+  height: 200px;
+  width: 150px;
+  margin-bottom: 200px;
+}
+
+.other-card {
+  width: 500px;
+  height: 600px;
+}
+.dealer-hand {
+  margin-left: 165px;
+  margin-bottom: -100px;
+  margin-top: -200px;
+}
+
+.scores {
+  display: flex;
+  align-items: baseline;
+  margin-top: -200px; 
+}
+
+.player-hand {
+  margin-top: -50px;
 }

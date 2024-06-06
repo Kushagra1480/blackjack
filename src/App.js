@@ -1,166 +1,178 @@
 import './App.css'
 import React, { useState } from 'react'
-
+import axios from 'axios'
 
 function App() {
-  const [deck, setDeck] = useState([])
+  const [game, setGame] = useState(false)
+  const [dealerTurn, setDealerTurn] = useState(false)
+  const [deckID, setDeckID] = useState('')
   const [playerHand, setPlayerHand] = useState([])
   const [dealerHand, setDealerHand] = useState([])
   const [playerScore, setPlayerScore] = useState(0)
   const [dealerScore, setDealerScore] = useState(0)
   const [playerWin, setPlayerWin] = useState(false)
   const [dealerWin, setDealerWin] = useState(false)
-  const [stand, setStand] = useState(false)
 
-  const createDeck = () => {
-    const suits = ['Hearts', 'Diamonds', 'Spades', 'Clubs']
-    const values = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King']
-    const newDeck = suits.flatMap(suit => values.map(value => ({suit, value})))
-    setDeck(newDeck)
+  const cardBack = "https://deckofcardsapi.com/static/img/back.png"
+  
+
+const fetchNewDeck = async () => {
+  try {
+    const { data: { deck_id: newDeckId } } = await axios.get(
+      "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=4"
+    );
+
+    setDeckID(newDeckId)
+
+    const { data: { cards: newPlayerHand } } = await axios.get(
+      `https://deckofcardsapi.com/api/deck/${newDeckId}/draw/?count=2`
+    );
+
+    setPlayerHand(newPlayerHand)
+    setPlayerScore(calculateScore(newPlayerHand));
+
+    const { data: { cards: newDealerHand } } = await axios.get(
+      `https://deckofcardsapi.com/api/deck/${newDeckId}/draw/?count=2`
+    );
+
+    setDealerHand(newDealerHand);
+
+  } catch (error) {
+    console.error(error);
   }
+}
 
-  const dealCards = () => {
-    if (deck.length < 2) {
-      alert("Empty Deck!! Initialize a Deck first!!")
-      return 
+  const getCardPoints = (card) => {
+    let points = 0
+    switch(card.value) {
+      case 'ACE':
+        points = 11
+        break
+      case 'KING':
+      case 'QUEEN':
+      case 'JACK':
+        points = 10
+        break
+      default:
+        points = parseInt(card.value)
     }
-    const shuffleDeck = [...deck].sort(() => Math.random() - 0.5)
-    const dealtCards = shuffleDeck.slice(0, 2)
-    const dealerCards = shuffleDeck.slice(2, 4)
-    setDeck(shuffleDeck.slice(2))
-    setPlayerHand(dealtCards)
-    setDealerHand(dealerCards)
-    setPlayerScore(calculateScore(dealtCards))
-    setDealerScore(calculateScore(dealerCards))
+    return points
   }
-  const calculateScore = (hand, owner) => {
+
+  const calculateScore = (hand) => {
     let score = 0
-    let hasAce = false
-    for (const card of hand) {
-      switch(card.value) {
-        case 'Ace':
-          score += 11
-          hasAce = true
-          break
-        case 'King':
-        case 'Queen':
-        case 'Jack':
-          score += 10
-          break
-        default:
-          score += parseInt(card.value)
+    for(const card of hand) {
+      if (card.value === 'ACE') {
+        if (score + 11 <= 21) {
+          score = score + 11      
+        } else {
+          score = score + 1
+        }
       }
+      else {
+        score = score + getCardPoints(card)
+      } 
     }
-    while (score > 21 && hasAce) {
-      score -= 10
-      hasAce = false
-    }
-    if (score === 21) {
-      switch(owner) {
-        case "player":
-          setPlayerWin(true)
-          break
-        case "dealer":
-          setDealerWin(true)
-      }
-    }
-    if (score > 21) {
-      switch(owner) {
-        case "player":
-          setDealerWin(true)
-          break
-        case "dealer":
-          setPlayerWin(true)
-      }
-    }
-    return score 
+    return score
   }
-  React.useEffect(() => {
-    createDeck();
-  }, [])
-  const resetGame = () => {
-    setDealerHand([])
-    setPlayerHand([])
+  const playHelper = () => {
+    setGame(true)
+    fetchNewDeck()
   }
-  const hit = () => {
-    const randomIndex = Math.floor(Math.random() * deck.length)
-    const dealtCard = deck.splice(randomIndex, 1)[0]
-    const newHand = [...playerHand, dealtCard]
-    setPlayerHand(newHand)
-    setPlayerScore(calculateScore(newHand, "player"))
-  }
-  const standHelper = () => {
-    setStand(true);
-    let updatedDealerHand = [...dealerHand]; // Create a copy of dealerHand
-    let score = dealerScore
 
-    while (score < 21 && deck.length > 0) {
-      const randomIndex = Math.floor(Math.random() * deck.length)
-      const dealtCard = deck.splice(randomIndex, 1)[0]
-      updatedDealerHand = [...updatedDealerHand, dealtCard]
-      score = calculateScore(updatedDealerHand, "dealer")
-      console.log("Score: ", score)
-    }
-    setDealerScore(score)
-    if (score > 21) {
-      setPlayerWin(true);
-    } else if (playerScore > score) {
-      setPlayerWin(true);
-    } else if (playerScore < score) {
-      setDealerWin(true);
+  const hitHelper = () => {
+    axios.get(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`)
+      .then(response => {
+        if (response.data) {
+          const drawnCard = response.data.cards[0]
+          setPlayerHand(prevPlayerHand => [...prevPlayerHand, drawnCard])
+          const newPlayerScore = playerScore + getCardPoints(drawnCard)
+          if (newPlayerScore > 21) {
+            setDealerWin(true)
+          } else if(newPlayerScore === 21) {
+            setPlayerWin(true)
+          }
+          setPlayerScore(newPlayerScore)
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
+
+  const dealerTurnHelper = () => {
+    setDealerTurn(true)
+    let currentDealerScore = dealerScore
+    while(currentDealerScore < 21) {
+      axios.get(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`)
+        .then(response => {
+          if (response.data) {
+            const drawnCard = response.data.cards[0]
+            setDealerHand(prevDealerHand => [...prevDealerHand, drawnCard])
+            if(drawnCard.value === 'ACE') {
+              if (currentDealerScore + 11 <= 21) {
+                currentDealerScore = currentDealerScore + 11
+              } else {
+                currentDealerScore = currentDealerScore + 1
+              }
+            } else {
+              currentDealerScore = currentDealerScore + getCardPoints(drawnCard)
+            }
+            if (currentDealerScore > 21) {
+              setPlayerWin(true)
+            } else if(currentDealerScore === 21) {
+              setDealerWin(true)
+            }
+            setDealerScore(currentDealerScore)
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        });
     }
   }
+
   return (
     <div className="App">
-      {dealerHand.length == 0 && (
-        <button className="start-button" onClick={dealCards}>START GAME</button>
+      {!game && (
+        <button className='start-button' onClick={playHelper}>PLAY</button>
       )}
-      {dealerHand.length && !playerWin && !dealerWin > 0 && (
+      {game && !playerWin && !dealerWin && (
         <div className='game'>
           <div className='hands'>
-              <h2>Dealer's Hand:</h2>
-              {!stand && (
-                <ul>
-                  <li key={0}>{dealerHand[0].value} of {dealerHand[0].suit}</li>
-                  <li>Face Down Card</li>
-                </ul>
-              ) }
-              {
-                stand && (
-                  <ul>
-                    {dealerHand.map((card, index) => (
-                        <li key={index}>{card.value} of {card.suit}</li>
-                    ))}
-                  </ul>
-                )
-              }
-            <h2>Your Hand:</h2>
-            <ul>
-              {playerHand.map((card, index) => (
-                  <li key={index}>{card.value} of {card.suit}</li>
-              ))}
-            </ul>
+          <h2>Dealer's Hand:</h2>
+            <div className='hand'>
+            {dealerTurn && dealerHand.map((card, index) => 
+              <img src={card.images.svg} className='hand-card'/>
+            )}
+            </div>
+            {!dealerTurn && dealerHand.length > 0 && (
+              <div className='dealer-hand'> 
+                <img src={cardBack} className='hand-card back-card'/>
+                <img src={dealerHand[1].images.svg} className='hard-card other-card'/>
+              </div>
+            )}  
+          <h2>Your Hand:</h2>
+          <div className='hand '>
+            {playerHand.map((card, index) => 
+              <img src={card.images.svg} className='hand-card'/>
+            )}
+            </div>
           </div>
-        <h4>Score: {playerScore}</h4>
-        <div className='game-buttons'>
-          <button onClick={hit} className='game-button'>HIT</button>
-          <button onClick={standHelper} className='game-button stand'>STAND</button>
+          <div className='scores'>
+            <h3>Player Score: {playerScore}</h3>
+          </div>
+          <div className='game-buttons'> 
+            <button className='game-button' onClick={hitHelper}>HIT</button>
+            <button className='game-button stand'onClick={dealerTurnHelper}>STAND</button>
+          </div>
         </div>
-      </div>
       )}
       {playerWin && (
-        <div className='game'>
-          <h1>Player Wins!!</h1>
-          <h4>Player Score: {playerScore}</h4>
-          <h4>Dealer Score: {dealerScore}</h4>
-        </div>
+        <h1>YOU WIN!!</h1>
       )}
       {dealerWin && (
-        <div className='game'>
-          <h1>Dealer Wins!!</h1>
-          <h4>Player Score: {playerScore}</h4>
-          <h4>Dealer Score: {dealerScore}</h4>
-        </div>
+        <h1>DEALER WINS!!</h1>
       )}
     </div>
   );
