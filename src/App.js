@@ -10,6 +10,8 @@ function App() {
   const [dealerHand, setDealerHand] = useState([])
   const [playerScore, setPlayerScore] = useState(0)
   const [dealerScore, setDealerScore] = useState(0)
+  const [playerWin, setPlayerWin] = useState(false)
+  const [dealerWin, setDealerWin] = useState(false)
 
   const cardBack = "https://deckofcardsapi.com/static/img/back.png"
   
@@ -27,28 +29,28 @@ const fetchNewDeck = async () => {
     );
 
     setPlayerHand(newPlayerHand)
-    setPlayerScore(calculateScore(newPlayerHand))
+    setPlayerScore(calculateScore(newPlayerHand));
 
     const { data: { cards: newDealerHand } } = await axios.get(
       `https://deckofcardsapi.com/api/deck/${newDeckId}/draw/?count=2`
     );
 
-    setDealerHand(newDealerHand)
+    setDealerHand(newDealerHand);
 
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 }
 
   const getCardPoints = (card) => {
     let points = 0
     switch(card.value) {
-      case 'Ace':
+      case 'ACE':
         points = 11
         break
-      case 'King':
-      case 'Queen':
-      case 'Jack':
+      case 'KING':
+      case 'QUEEN':
+      case 'JACK':
         points = 10
         break
       default:
@@ -60,7 +62,16 @@ const fetchNewDeck = async () => {
   const calculateScore = (hand) => {
     let score = 0
     for(const card of hand) {
-      score = score + getCardPoints(card)
+      if (card.value === 'ACE') {
+        if (score + 11 <= 21) {
+          score = score + 11      
+        } else {
+          score = score + 1
+        }
+      }
+      else {
+        score = score + getCardPoints(card)
+      } 
     }
     return score
   }
@@ -70,11 +81,23 @@ const fetchNewDeck = async () => {
   }
 
   const hitHelper = () => {
-    const { data: { cards: newPlayerHand } } = axios.get(
-      `https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`
-    )
-    setPlayerHand([...playerHand, ...newPlayerHand])
-    setPlayerScore(calculateScore([...playerHand, ...newPlayerHand]))
+    axios.get(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=1`)
+      .then(response => {
+        if (response.data) {
+          const drawnCard = response.data.cards[0]
+          setPlayerHand(prevPlayerHand => [...prevPlayerHand, drawnCard])
+          const newPlayerScore = playerScore + getCardPoints(drawnCard)
+          if (newPlayerScore > 21) {
+            setDealerWin(true)
+          } else if(newPlayerScore === 21) {
+            setPlayerWin(true)
+          }
+          setPlayerScore(newPlayerScore)
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }
 
 
@@ -83,7 +106,7 @@ const fetchNewDeck = async () => {
       {!game && (
         <button className='start-button' onClick={playHelper}>PLAY</button>
       )}
-      {game && (
+      {game && !playerWin && !dealerWin && (
         <div className='game'>
           <div className='hands'>
           <h2>Dealer's Hand:</h2>
@@ -113,6 +136,12 @@ const fetchNewDeck = async () => {
             <button className='game-button stand'>STAND</button>
           </div>
         </div>
+      )}
+      {playerWin && (
+        <h1>YOU WIN!!</h1>
+      )}
+      {dealerWin && (
+        <h1>DEALER WINS!!</h1>
       )}
     </div>
   );
