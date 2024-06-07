@@ -12,6 +12,7 @@ function App() {
   const [dealerScore, setDealerScore] = useState(0)
   const [playerWin, setPlayerWin] = useState(false)
   const [dealerWin, setDealerWin] = useState(false)
+  const [gameOver, setGameOver] = useState(false)
 
   const cardBack = "https://deckofcardsapi.com/static/img/back.png"
   
@@ -90,8 +91,10 @@ const fetchNewDeck = async () => {
           const newPlayerScore = playerScore + getCardPoints(drawnCard)
           if (newPlayerScore > 21) {
             setDealerWin(true)
+            setGameOver(true)
           } else if(newPlayerScore === 21) {
             setPlayerWin(true)
+            setGameOver(true)
           }
           setPlayerScore(newPlayerScore)
         }
@@ -116,8 +119,6 @@ const fetchNewDeck = async () => {
   const dealerTurnHelper = async () => {
     setDealerTurn(true)
     let currentDealerScore = dealerScore
-    console.log(`currentDealerScore: ${currentDealerScore}`)
-    // Base case: stop recursion when dealer's score is 21 or greater
     if (currentDealerScore >= 21) {
       return
     }
@@ -137,14 +138,28 @@ const fetchNewDeck = async () => {
       }
       if (currentDealerScore > 21) {
         setPlayerWin(true)
+        setGameOver(true)
       } else if (currentDealerScore === 21) {
         setDealerWin(true)
+        setGameOver(true)
       }
       setDealerScore(currentDealerScore)
       if (currentDealerScore < 21) {
         await dealerTurnHelper()
       }
     }
+  }
+  const resetGame = () => {
+    setGame(false)
+    setDealerTurn(false)
+    setPlayerHand([])
+    setDealerHand([])
+    setPlayerScore(0)
+    setDealerScore(0)
+    setPlayerWin(false)
+    setDealerWin(false)
+    setGameOver(false)
+    fetchNewDeck()
   }
   return (
     <div className="App">
@@ -179,10 +194,19 @@ const fetchNewDeck = async () => {
               <h3>Dealer Score: {dealerScore}</h3>
             )}
           </div>
-          <div className='game-buttons'> 
-            <button className='game-button' onClick={hitHelper}>HIT</button>
-            <button className='game-button stand'onClick={dealerTurnHelper}>STAND</button>
+          {!gameOver && (
+            <div className='game-buttons'> 
+              <button className='game-button' onClick={hitHelper}>HIT</button>
+              <button className='game-button stand'onClick={dealerTurnHelper}>STAND</button>
+            </div>
+          )}
+          {gameOver && (
+            <div className='game-buttons'> 
+            <button onClick={resetGame} className='game-button'>PLAY AGAIN</button>
+            <button disabled className='game-button' onClick={hitHelper}>HIT</button>
+            <button disabled className='game-button stand'onClick={dealerTurnHelper}>STAND</button>
           </div>
+          )}
         </div>
       )}
       {playerWin && (
